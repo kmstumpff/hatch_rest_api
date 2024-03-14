@@ -103,7 +103,7 @@ class Hatch:
 
     async def favorites(self, auth_token: str, mac: str):
         url = API_URL + "service/app/routine/v2/fetch"
-        params = {"macAddress": mac, "types": "favorite"}
+        params = {"macAddress": mac}
         response: ClientResponse = (
             await self._get_request_with_logging_and_errors_raised(
                 url=url, auth_token=auth_token, params=params
@@ -111,7 +111,15 @@ class Hatch:
         )
         response_json = await response.json()
         favorites = response_json["payload"]
-        favorites.sort(key=lambda x: x.get("displayOrder", float('inf')))
+        if favorites:
+            favorites = list(
+                filter(
+                    lambda x: x.get("type") == "favorite"
+                    or x.get("button0", False) == True,
+                    favorites,
+                )
+            )
+            favorites.sort(key=lambda x: x.get("displayOrder", float("inf")))
         return favorites
 
     async def routines(self, auth_token: str, mac: str):
